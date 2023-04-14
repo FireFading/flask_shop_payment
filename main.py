@@ -1,6 +1,6 @@
-from flask import Flask, render_template, redirect, request
-from flask_sqlalchemy import SQLAlchemy
 from cloudipsp import Api, Checkout
+from flask import Flask, redirect, render_template, request
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///./shop.sqlite3"
@@ -32,21 +32,21 @@ def about():
 
 @app.route("/create", methods=["POST", "GET"])
 def create():
-    if request.method == "POST":
-        name = request.form["name"]
-        cost = request.form["cost"]
-        description = request.form["description"]
-
-        product = Product(name=name, cost=cost, description=description)
-
-        try:
-            db.session.add(product)
-            db.session.commit()
-            return redirect("/")
-        except:
-            return "error"
-    else:
+    if request.method != "POST":
         return render_template("create.html")
+
+    name = request.form["name"]
+    cost = request.form["cost"]
+    description = request.form["description"]
+
+    product = Product(name=name, cost=cost, description=description)
+
+    try:
+        db.session.add(product)
+        db.session.commit()
+        return redirect("/")
+    except Exception:
+        return "error"
 
 
 @app.route("/buy/<int:id>")
@@ -54,12 +54,10 @@ def buy(id):
     product = Product.query.get(id)
     api = Api(merchant_id=1396424, secret_key="test")
     checkout = Checkout(api=api)
-    data = {
-        "currency": "USD",
-        "amount": (str(product.cost) + "00"),
-    }
+    data = {"currency": "USD", "amount": f"{str(product.cost)}00"}
     url = checkout.url(data).get("checkout_url")
     return redirect(url)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
