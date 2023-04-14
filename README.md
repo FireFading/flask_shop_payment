@@ -10,4 +10,4 @@
 - ```
     from main import Product, db
     db.create_all()
-```
+    ```
